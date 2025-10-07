@@ -87,11 +87,7 @@ const Index = () => {
                   Sign Out
                 </Button>
               </>
-            ) : (
-              <Button onClick={() => navigate("/auth")}>
-                Get Started
-              </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </header>
@@ -115,11 +111,6 @@ const Index = () => {
             Join our community where people donate their time to help others. 
             Every hour matters, every skill counts.
           </p>
-          {!user && (
-            <Button size="lg" onClick={() => navigate("/auth")} className="shadow-glow animate-fade-in">
-              Join TimeBank Today
-            </Button>
-          )}
         </div>
       </section>
 
@@ -165,22 +156,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      {!user && (
-        <section className="container mx-auto px-4 py-16">
-          <Card className="bg-gradient-warm text-white shadow-glow">
-            <CardHeader className="text-center space-y-4 py-12">
-              <CardTitle className="text-4xl">Ready to Make a Difference?</CardTitle>
-              <CardDescription className="text-white/90 text-lg">
-                Join as an admin to manage the platform or as an executive to donate your time.
-              </CardDescription>
-              <Button size="lg" variant="secondary" onClick={() => navigate("/auth")} className="mt-4">
-                Get Started Now
-              </Button>
-            </CardHeader>
-          </Card>
-        </section>
-      )}
 
       {/* Footer */}
       <footer className="bg-card border-t mt-16">
