@@ -111,6 +111,11 @@ const Index = () => {
             Join our community where people donate their time to help others. 
             Every hour matters, every skill counts.
           </p>
+          {!user && (
+            <Button size="lg" onClick={() => navigate("/auth")} className="shadow-glow animate-fade-in">
+              Get Started
+            </Button>
+          )}
         </div>
       </section>
 
