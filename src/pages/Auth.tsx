@@ -85,6 +85,17 @@ const Auth = () => {
             <Button type="submit" className="w-full">
               Continue
             </Button>
+            <div className="text-center mt-4">
+              <p className="text-sm text-muted-foreground mb-2">Don't have an account?</p>
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/register")}
+              >
+                Register
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
