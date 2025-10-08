@@ -12,53 +12,54 @@ import { Clock } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent, isSignUp: boolean = false) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-        },
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone,
       });
 
       if (error) throw error;
 
-      if (data?.user) {
-        toast.success("Account created! Please complete your registration.");
-        navigate("/register");
-      }
+      setOtpSent(true);
+      toast.success("OTP sent to your phone!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign up");
+      toast.error(error.message || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent, isSignUp: boolean = false) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: phone,
+        token: otp,
+        type: 'sms'
       });
 
       if (error) throw error;
 
       if (data?.user) {
-        toast.success("Welcome back!");
-        navigate("/");
+        if (isSignUp) {
+          toast.success("Phone verified! Please complete your registration.");
+          navigate("/register");
+        } else {
+          toast.success("Welcome back!");
+          navigate("/");
+        }
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      toast.error(error.message || "Failed to verify OTP");
     } finally {
       setLoading(false);
     }
@@ -88,64 +89,103 @@ const Auth = () => {
             </TabsList>
             
             <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
+              {!otpSent ? (
+                <form onSubmit={(e) => handleSendOtp(e, false)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-phone">Mobile Number</Label>
+                    <Input
+                      id="signin-phone"
+                      type="tel"
+                      placeholder="+1234567890"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Sending OTP..." : "Send OTP"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={(e) => handleVerifyOtp(e, false)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-otp">Enter OTP</Label>
+                    <Input
+                      id="signin-otp"
+                      type="text"
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                      maxLength={6}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                    }}
+                  >
+                    Change Number
+                  </Button>
+                </form>
+              )}
             </TabsContent>
             
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
-                </Button>
-              </form>
+              {!otpSent ? (
+                <form onSubmit={(e) => handleSendOtp(e, true)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Mobile Number</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="+1234567890"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Sending OTP..." : "Send OTP"}
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={(e) => handleVerifyOtp(e, true)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-otp">Enter OTP</Label>
+                    <Input
+                      id="signup-otp"
+                      type="text"
+                      placeholder="123456"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                      maxLength={6}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Verifying..." : "Verify & Continue"}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="ghost" 
+                    className="w-full" 
+                    onClick={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                    }}
+                  >
+                    Change Number
+                  </Button>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
