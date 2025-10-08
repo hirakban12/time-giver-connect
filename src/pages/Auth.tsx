@@ -1,68 +1,45 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
 
-  const handleSendOtp = async (e: React.FormEvent, isSignUp: boolean = false) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        phone: phone,
-      });
-
-      if (error) throw error;
-
-      setOtpSent(true);
-      toast.success("OTP sent to your phone!");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send OTP");
-    } finally {
-      setLoading(false);
+    if (!name.trim() || !phone.trim()) {
+      toast.error("Please enter both name and phone number");
+      return;
     }
-  };
 
-  const handleVerifyOtp = async (e: React.FormEvent, isSignUp: boolean = false) => {
-    e.preventDefault();
-    setLoading(true);
+    // Create user profile in localStorage
+    const userId = Date.now().toString();
+    const user = {
+      id: userId,
+      name: name.trim(),
+      phone: phone.trim(),
+      photo: "",
+      createdAt: new Date().toISOString()
+    };
 
-    try {
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: phone,
-        token: otp,
-        type: 'sms'
-      });
+    // Store current user
+    localStorage.setItem("currentUser", JSON.stringify(user));
 
-      if (error) throw error;
+    // Add to users list
+    const users = JSON.parse(localStorage.getItem("allUsers") || "[]");
+    users.push(user);
+    localStorage.setItem("allUsers", JSON.stringify(users));
 
-      if (data?.user) {
-        if (isSignUp) {
-          toast.success("Phone verified! Please complete your registration.");
-          navigate("/register");
-        } else {
-          toast.success("Welcome back!");
-          navigate("/");
-        }
-      }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to verify OTP");
-    } finally {
-      setLoading(false);
-    }
+    toast.success(`Welcome, ${name}!`);
+    navigate("/profile");
   };
 
   return (
@@ -82,112 +59,33 @@ const Auth = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              {!otpSent ? (
-                <form onSubmit={(e) => handleSendOtp(e, false)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-phone">Mobile Number</Label>
-                    <Input
-                      id="signin-phone"
-                      type="tel"
-                      placeholder="+1234567890"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Sending OTP..." : "Send OTP"}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={(e) => handleVerifyOtp(e, false)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-otp">Enter OTP</Label>
-                    <Input
-                      id="signin-otp"
-                      type="text"
-                      placeholder="123456"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      required
-                      maxLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Verifying..." : "Verify OTP"}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp("");
-                    }}
-                  >
-                    Change Number
-                  </Button>
-                </form>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              {!otpSent ? (
-                <form onSubmit={(e) => handleSendOtp(e, true)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Mobile Number</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="+1234567890"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Sending OTP..." : "Send OTP"}
-                  </Button>
-                </form>
-              ) : (
-                <form onSubmit={(e) => handleVerifyOtp(e, true)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-otp">Enter OTP</Label>
-                    <Input
-                      id="signup-otp"
-                      type="text"
-                      placeholder="123456"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      required
-                      maxLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Verifying..." : "Verify & Continue"}
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    className="w-full" 
-                    onClick={() => {
-                      setOtpSent(false);
-                      setOtp("");
-                    }}
-                  >
-                    Change Number
-                  </Button>
-                </form>
-              )}
-            </TabsContent>
-          </Tabs>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+1234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full">
+              Continue
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
