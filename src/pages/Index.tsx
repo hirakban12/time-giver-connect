@@ -112,7 +112,7 @@ const Index = () => {
             Every hour matters, every skill counts.
           </p>
           {!user && (
-            <Button size="lg" onClick={() => navigate("/auth")} className="shadow-glow animate-fade-in">
+            <Button size="lg" onClick={() => navigate("/register")} className="shadow-glow animate-fade-in">
               Get Started
             </Button>
           )}
